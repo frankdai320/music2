@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Song {{ id }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.1/moment.js"></script>
+</head>
+
+<body>
+{% include "header.html" %}
+
+<br>
+<div class="container">
+    {% if entry %}
+    <div class="row">
+        <div class="col">
+            Submitted by {{entry.added_by}} at <script> document.write(moment.utc("{{entry.date_added}}").local().format("h:mm:ss a, MMMM Do YYYY"))</script>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <form>
+                <input type="checkbox" id="shuffle" onchange="handleCheckbox(this)" {% if shuffle %} checked {%endif%}>
+                &nbsp;<label for="shuffle">Shuffle
+            </label>
+            </form>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <iframe id="player" type="text/html" width="640" height="390" src="https://www.youtube-nocookie.com/embed/{{entry.link}}?enablejsapi=1&rel=0&playsinline=1&origin={{domain}}&iv_load_policy=3"
+                frameborder="0"></iframe>
+    </div>
+
+    <script>
+      // 2. This code loads the IFrame Player API code asynchronously.
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      // 3. This function creates an <iframe> (and YouTube player)
+      //    after the API code downloads.
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+            'onError': onError
+          }
+        });
+      }
+
+      // 4. The API will call this function when the video player is ready.
+      function onPlayerReady(event) {
+        event.target.playVideo();
+      }
+
+      // 5. The API calls this function when the player's state changes.
+      //    The function indicates that when playing a video (state=1),
+      //    the player should play for six seconds and then stop.
+  function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.ENDED) {
+      setTimeout(redirect, 1000);
+    }
+  }
+  function onError(event) {
+    setTimeout(redirect, 10000)
+  }
+  function redirect() {
+      if (!document.getElementById("shuffle").checked) {
+	location = "{{ url_for('get', musicid=id+1) }}";
+      } else {
+	location = "{{ url_for('random', shuffle=true) }}";
+      }
+  }
+      function stopVideo() {
+        player.stopVideo();
+      }
+
+
+    </script>
+    {% else %}
+    <div class="row">
+        This id doesn't exist yet!
+    </div>
+    <br>
+    <div class="row"><a href="{{ url_for('get', musicid=id) }}">Try again?</a></div>
+    {% endif %}
+    <br>
+    <div class="row">
+        {% if id != 1 %}
+        <div class="col-auto">
+            <a href="{{ url_for('get', musicid=id-1) }}" class="btn btn-outline-primary btn-sm">Previous</a>
+        </div>
+        {% endif %}
+        {% if entry %}
+        <div class="col-auto">
+            <a href="{{ url_for('get', musicid=id+1) }}" class="btn btn-outline-primary btn-sm">Next</a>
+        </div>
+        {% endif %}
+    </div>
+    <br>
+    <div class="row">
+        <div class="col">
+            <a href="{{ url_for('add') }}" class="btn btn-primary">Add video</a>
+        </div>
+    </div>
+</div>
+</body>

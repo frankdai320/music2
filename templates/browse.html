@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Browse Music</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+{% include "header.html" %}
+<br>
+<div class="container">
+    <div class="row"><h2>Browse Music</h2></div>
+    <br>
+    {% if entries %}
+        <ol start="{{ first_num }}">
+            {% for entry in entries %}
+    	        <li> <a href="{{ url_for('get', musicid=entry.position) }}">{{ entry.title }}</a> </li>
+            {% endfor %}
+        </ol>
+        <br>
+    {% else %}
+    <div class="row"> This page is empty. </div>
+    <br>
+    {% endif %}
+    <div class="row">
+        {% if page_num > 1 %}
+        <div class="col-auto">
+            <a href="{{ url_for('browse', page=page_num-1) }}" class="btn btn-outline-primary btn-sm">Previous</a>
+        </div>
+        {% endif %}
+        {% if entries|length == page_length %}
+        <div class="col-auto">
+            <a href="{{ url_for('browse', page=page_num+1) }}" class="btn btn-outline-primary btn-sm">Next</a>
+        </div>
+        {%endif%}
+    </div>
+</div>
+</body>
+</html>
