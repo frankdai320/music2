@@ -36,7 +36,8 @@ def get(musicid):
     if entry:
         entry.update_title()  # called every 2 weeks at most
     # entry might be None, handled in template
-    return render_template("get.html", id=musicid, entry=entry, domain=request.remote_addr,
+    domain = request.url_root.rstrip('/') # doesn't work with traling slash for some reason
+    return render_template("get.html", id=musicid, entry=entry, domain=domain,
                                                   shuffle=request.args.get('shuffle', False))
 
 
@@ -64,8 +65,7 @@ def all():
         if not entry.title:
             entry.update_title(force=True)
     return render_template('browse.html', page_num=1, first_num=1, entries=list(entries), page_length=0)
-
-
+ 
 
 @app.route('/add', methods = ['GET', 'POST'])
 def add():
