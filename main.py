@@ -41,30 +41,13 @@ def get(musicid):
                                                   shuffle=request.args.get('shuffle', False))
 
 
-@app.route('/browse/')
-def browse():
-    items_per_page = 50
-    page_num = int(request.args.get('page', '1'))
-    end_index = items_per_page * page_num + 1
-    start_index = end_index - items_per_page
-    entries = []
-    for n in range(start_index, end_index):
-        entry = getitem(n)
-        if entry:
-            entries.append(entry)
-            if not entry.title:
-                entry.update_title(force=True)
-    return render_template('browse.html', page_num=page_num, first_num=start_index, 
-                            entries=entries, page_length=items_per_page)
-
-
 @app.route('/all/')
 def all():
     entries = Music.query().order(Music.position)
     for entry in entries:
         if not entry.title:
             entry.update_title(force=True)
-    return render_template('browse.html', page_num=1, first_num=1, entries=list(entries), page_length=0)
+    return render_template('all.html', entries=list(entries))
  
 
 @app.route('/add/', methods = ['GET', 'POST'])

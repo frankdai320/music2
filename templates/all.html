@@ -21,20 +21,7 @@
         <br>
     {% else %}
     <div class="row"> This page is empty. </div>
-    <br>
     {% endif %}
-    <div class="row">
-        {% if page_num > 1 %}
-        <div class="col-auto">
-            <a href="{{ url_for('browse', page=page_num-1) }}" class="btn btn-outline-primary btn-sm">Previous</a>
-        </div>
-        {% endif %}
-        {% if entries|length == page_length %}
-        <div class="col-auto">
-            <a href="{{ url_for('browse', page=page_num+1) }}" class="btn btn-outline-primary btn-sm">Next</a>
-        </div>
-        {%endif%}
-    </div>
 </div>
 </body>
 </html>
