@@ -1,12 +1,12 @@
 import datetime
 import json
 import re
+
 import sys
 
-#magical nonsense to make python2 work
+# magical nonsense to make python2 work
 reload(sys)
 sys.setdefaultencoding('UTF8')
-
 
 from flask import Flask, redirect, url_for, render_template, Response, request, jsonify
 
@@ -17,9 +17,11 @@ from google.appengine.api import urlfetch
 
 from models import Music
 
+
 @app.route('/robots.txt')
 def robots():
     return Response("User-agent:*\nDisallow: /", mimetype="text/plain")
+
 
 @app.route('/')
 def index():
@@ -27,6 +29,7 @@ def index():
         musicid = request.args.get('musicid') or 1
         return redirect(url_for('get', musicid=musicid))
     return render_template('index.html')
+
 
 @app.route('/<int:musicid>/')
 def get(musicid):
@@ -36,9 +39,9 @@ def get(musicid):
     if entry:
         entry.update_title()  # called every 2 weeks at most
     # entry might be None, handled in template
-    domain = request.url_root.rstrip('/') # doesn't work with traling slash for some reason
+    domain = request.url_root.rstrip('/')  # doesn't work with traling slash for some reason
     return render_template("get.html", id=musicid, entry=entry, domain=domain,
-                                                  shuffle=request.args.get('shuffle', False))
+                           shuffle=request.args.get('shuffle', False))
 
 
 @app.route('/all/')
@@ -48,9 +51,9 @@ def all():
         if not entry.title:
             entry.update_title(force=True)
     return render_template('all.html', entries=list(entries))
- 
 
-@app.route('/add/', methods = ['GET', 'POST'])
+
+@app.route('/add/', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
         regex = re.compile("https?://(?:www\.|m\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)")
@@ -58,16 +61,16 @@ def add():
         match = regex.match(url)
         if not match:
             return Response(url + " is not a valid video url", mimetype='text/plain',
-                                status=400)
+                            status=400)
         else:
             link = match.group(1)
             valid = urlfetch.fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='
-                            '{vid}&format=json'.format(vid=link), validate_certificate=True)
+                                   '{vid}&format=json'.format(vid=link), validate_certificate=True)
             print(valid.status_code)
-            
+
             if valid.status_code != 200:
                 return Response(url + " is not a valid youtube video", mimetype="text/plain",
-                                    status=400)
+                                status=400)
             else:
                 ip = request.remote_addr
                 time = datetime.datetime.utcnow()
@@ -78,25 +81,27 @@ def add():
                           added_by=request.values.get('name', ''),
                           ip=ip,
                           position=Music.query().count() + 1,  # not saved yet
-                          title=json.loads(decoded).get('title',''))
+                          title=json.loads(decoded).get('title', ''))
 
-                data = {'id':Music.query().count(), 'url':url, 'link':url_for('get', musicid=Music.query().count() + 1)}
+                data = {'id': Music.query().count(), 'url': url,
+                        'link': url_for('get', musicid=Music.query().count() + 1)}
                 m.put()
                 return jsonify(data)
     else:
         return render_template('add.html')
 
+
 @app.route('/renumber/')
 def renumber():
     music = Music.query().order(Music.date_added)
-    for i,m in enumerate(music):
-        m.position = i+1
+    for i, m in enumerate(music):
+        m.position = i + 1
         m.put()
     return Response(status=204)
 
 
 def getitem(num):
-    return Music.query(Music.position==num).get()
+    return Music.query(Music.position == num).get()
 
 
 @app.route('/api/<int:musicid>/')
@@ -104,9 +109,9 @@ def api(musicid):
     entry = getitem(musicid)
     if entry:
         import time
-        timestamp = int(time.mktime(entry.date_added.timetuple())+entry.date_added.microsecond/1000000.0)
+        timestamp = int(time.mktime(entry.date_added.timetuple()) + entry.date_added.microsecond / 1000000.0)
         return jsonify({"id": entry.link, "name": entry.added_by, "time": timestamp,
-                             'num': musicid})
+                        'num': musicid})
     return Response(json.dumps({}), mimetype="application/json", status=404)
 
 
@@ -139,6 +144,7 @@ def random_music_num():
 def latest_music_num():
     """Return the number of the latest valid music."""
     return Music.query().count()
+
 
 @app.route('/random/')
 def random():
