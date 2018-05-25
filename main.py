@@ -28,7 +28,7 @@ def index():
         return redirect(url_for('get', musicid=musicid))
     return render_template('index.html')
 
-@app.route('/<int:musicid>')
+@app.route('/<int:musicid>/')
 def get(musicid):
     if int(musicid) == 0:
         return redirect(url_for('get', musicid=1))
@@ -41,7 +41,7 @@ def get(musicid):
                                                   shuffle=request.args.get('shuffle', False))
 
 
-@app.route('/browse')
+@app.route('/browse/')
 def browse():
     items_per_page = 50
     page_num = int(request.args.get('page', '1'))
@@ -58,7 +58,7 @@ def browse():
                             entries=entries, page_length=items_per_page)
 
 
-@app.route('/all')
+@app.route('/all/')
 def all():
     entries = Music.query().order(Music.position)
     for entry in entries:
@@ -67,7 +67,7 @@ def all():
     return render_template('browse.html', page_num=1, first_num=1, entries=list(entries), page_length=0)
  
 
-@app.route('/add', methods = ['GET', 'POST'])
+@app.route('/add/', methods = ['GET', 'POST'])
 def add():
     if request.method == 'POST':
         regex = re.compile("https?://(?:www\.|m\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)")
@@ -103,7 +103,7 @@ def add():
     else:
         return render_template('add.html')
 
-@app.route('/renumber')
+@app.route('/renumber/')
 def renumber():
     music = Music.query().order(Music.date_added)
     for i,m in enumerate(music):
@@ -116,7 +116,7 @@ def getitem(num):
     return Music.query(Music.position==num).get()
 
 
-@app.route('/api/<int:musicid>')
+@app.route('/api/<int:musicid>/')
 def api(musicid):
     entry = getitem(musicid)
     if entry:
@@ -127,22 +127,22 @@ def api(musicid):
     return Response(json.dumps({}), mimetype="application/json", status=404)
 
 
-@app.route('/api/random')
+@app.route('/api/random/')
 def api_random():
     return redirect(url_for('api', musicid=random_music_num()))
 
 
-@app.route('/api/latest')
+@app.route('/api/latest/')
 def api_latest():
     return redirect(url_for('api', musicid=latest_music_num()))
 
 
-@app.route('/api/num')
+@app.route('/api/num/')
 def num():
     return Response(Music.objects.count(), mimetype='text/plain')
 
 
-@app.route('/latest')
+@app.route('/latest/')
 def latest():
     return redirect(url_for('get', musicid=latest_music_num()))
 
@@ -157,7 +157,7 @@ def latest_music_num():
     """Return the number of the latest valid music."""
     return Music.query().count()
 
-@app.route('/random')
+@app.route('/random/')
 def random():
     if request.args.get('shuffle', False):
         return redirect(url_for('get', musicid=random_music_num(), shuffle="true"))
