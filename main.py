@@ -1,8 +1,9 @@
 import datetime
 import json
 import re
-
 import sys
+
+from bandcamp import get_raw_link
 
 # magical nonsense to make python2 work
 reload(sys)
@@ -12,7 +13,6 @@ from flask import Flask, redirect, url_for, render_template, Response, request, 
 
 app = Flask(__name__, template_folder="templates")
 
-from google.appengine.ext import ndb
 from google.appengine.api import urlfetch
 
 from models import Music
@@ -151,3 +151,14 @@ def random():
     if request.args.get('shuffle', False):
         return redirect(url_for('get', musicid=random_music_num(), shuffle="true"))
     return redirect(url_for('get', musicid=random_music_num()))
+
+
+@app.route('/bandcamp/')
+def bandcamp():
+    link = request.args.get('link')
+    if not link:
+        return '', 400
+    raw_link = get_raw_link(link)
+    if not raw_link:
+        return '', 400
+    return render_template('bandcamp.html', raw_link=get_raw_link(link))
