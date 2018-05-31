@@ -1,5 +1,5 @@
 <div class="row">
-    <iframe id="player" width="640" height="200" src="{{ url_for('bandcamp', link=entry.link) }}"
+    <iframe id="player" width="640" height="200" src="{{ url_for('bandcamp', link=entry.link, title=entry.title) }}"
             frameborder="0"></iframe>
 </div>
 

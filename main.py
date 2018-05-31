@@ -169,6 +169,7 @@ def bandcamp():
     if not link:
         return '', 400
     raw_link = get_raw_link(link)
+    title = request.args.get('title') or get_title(link)  # get_title() makes a network call
     if not raw_link:
         return '', 400
-    return render_template('bandcamp_iframe.html', raw_link=get_raw_link(link))
+    return render_template('bandcamp_iframe.html', raw_link=raw_link, title=title, link=link)
