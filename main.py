@@ -3,7 +3,7 @@ import json
 import re
 import sys
 
-from bandcamp import get_raw_link
+from bandcamp import get_raw_link, get_title
 
 # magical nonsense to make python2 work
 reload(sys)
@@ -56,37 +56,47 @@ def all():
 @app.route('/add/', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        regex = re.compile("https?://(?:www\.|m\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)")
+        yt_regex = re.compile("https?://(?:www\.|m\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)")
         url = request.values.get('url', '')
-        match = regex.match(url)
-        if not match:
-            return Response(url + " is not a valid video url", mimetype='text/plain',
-                            status=400)
+        yt_match = yt_regex.match(url)
+        bc_match = None
+        if not yt_match:
+            bc_match = get_raw_link(url)
+
+        if not (yt_match or bc_match):
+            return Response(url + " is not a valid url", mimetype='text/plain', status=400)
         else:
-            link = match.group(1)
-            valid = urlfetch.fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='
-                                   '{vid}&format=json'.format(vid=link), validate_certificate=True)
-            print(valid.status_code)
+            if yt_match:
+                link = yt_match.group(1)
+                valid = urlfetch.fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='
+                                       '{vid}&format=json'.format(vid=link), validate_certificate=True)
 
-            if valid.status_code != 200:
-                return Response(url + " is not a valid youtube video", mimetype="text/plain",
-                                status=400)
-            else:
-                ip = request.remote_addr
-                time = datetime.datetime.utcnow()
+                if valid.status_code != 200:
+                    return Response(url + " is not a valid youtube video", mimetype="text/plain",
+                                    status=400)
+
                 decoded = valid.content.decode('utf-8')
-                m = Music(link=link,
-                          date_added=time,
-                          title_cache_time=time,
-                          added_by=request.values.get('name', ''),
-                          ip=ip,
-                          position=Music.query().count() + 1,  # not saved yet
-                          title=json.loads(decoded).get('title', ''))
+                title = json.loads(decoded).get('title', '')
+            else:
+                link = url
+                title = get_title(url)
 
-                data = {'id': Music.query().count(), 'url': url,
-                        'link': url_for('get', musicid=Music.query().count() + 1)}
-                m.put()
-                return jsonify(data)
+            ip = request.remote_addr
+            time = datetime.datetime.utcnow()
+
+            m = Music(link=link,
+                      date_added=time,
+                      title_cache_time=time,
+                      added_by=request.values.get('name', ''),
+                      ip=ip,
+                      position=Music.query().count() + 1,  # not saved yet
+                      title=title,
+                      type='youtube' if yt_match else 'bandcamp')
+
+            data = {'id': Music.query().count(), 'url': url,
+                    'link': url_for('get', musicid=Music.query().count() + 1)}
+            m.put()
+            return jsonify(data)
     else:
         return render_template('add.html')
 
@@ -161,4 +171,4 @@ def bandcamp():
     raw_link = get_raw_link(link)
     if not raw_link:
         return '', 400
-    return render_template('bandcamp.html', raw_link=get_raw_link(link))
+    return render_template('bandcamp_iframe.html', raw_link=get_raw_link(link))

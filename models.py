@@ -13,6 +13,7 @@ class Music(ndb.Model):
     title = ndb.StringProperty()  # set on creation
     title_cache_time = ndb.DateTimeProperty(required=True)
     position = ndb.IntegerProperty(required=True)
+    type = ndb.StringProperty(default='youtube')
 
     def __str__(self):
         return '{link} {date} by {user} ({ip})'.format(link=self.link, date=self.date_added, user=self.added_by,

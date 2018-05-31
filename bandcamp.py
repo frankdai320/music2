@@ -14,32 +14,39 @@ else:
 PATTERN = re.compile(r'trackinfo:\s+(.+),')
 
 
-def get_raw_link(url):
+def _get_info(url):
     if not from_host(url, 'bandcamp.com'):
-        return
+        return {}
     try:
         page = urlfetch.fetch(url)
     except Exception:
-        return
+        return {}
 
     search = PATTERN.search(page.content)
     if not search:
-        return
+        return {}
     try:
         info = loads(search.group(1))
     except Exception:
-        return
+        return {}
 
     if len(info) == 0:
-        return
+        return {}
 
-    info = info[0]
-    file_info = info.get('file')
+    return info[0]
+
+
+def get_raw_link(url):
+    file_info = _get_info(url).get('file')
 
     if not file_info:
         return
 
     return file_info.get('mp3-128')
+
+
+def get_title(url):
+    return _get_info(url).get('title')
 
 
 def from_host(url, host):
