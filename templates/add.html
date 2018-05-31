@@ -12,7 +12,7 @@
     $('#url').val("");
     $("#final").append("<br>Submitted to server");
         $.ajax({
-            url: '/add',
+            url: '/add/',
             type: 'POST',
             data: results,
             success: function(data, status, something) {
