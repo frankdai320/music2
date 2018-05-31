@@ -1,8 +1,9 @@
 import datetime
 import json
 import re
-
 import sys
+
+from bandcamp import get_raw_link, get_title
 
 # magical nonsense to make python2 work
 reload(sys)
@@ -12,7 +13,6 @@ from flask import Flask, redirect, url_for, render_template, Response, request, 
 
 app = Flask(__name__, template_folder="templates")
 
-from google.appengine.ext import ndb
 from google.appengine.api import urlfetch
 
 from models import Music
@@ -56,37 +56,48 @@ def all():
 @app.route('/add/', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        regex = re.compile("https?://(?:www\.|m\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)")
+        yt_regex = re.compile("https?://(?:www\.|m\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)")
         url = request.values.get('url', '')
-        match = regex.match(url)
-        if not match:
-            return Response(url + " is not a valid video url", mimetype='text/plain',
-                            status=400)
+        yt_match = yt_regex.match(url)
+        bc_match = None
+        if not yt_match:
+            bc_match = get_raw_link(url)
+
+        if not (yt_match or bc_match):
+            return Response(url + " is not a valid url", mimetype='text/plain', status=400)
         else:
-            link = match.group(1)
-            valid = urlfetch.fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='
-                                   '{vid}&format=json'.format(vid=link), validate_certificate=True)
-            print(valid.status_code)
+            if yt_match:
+                link = yt_match.group(1)
+                valid = urlfetch.fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v='
+                                       '{vid}&format=json'.format(vid=link), validate_certificate=True)
 
-            if valid.status_code != 200:
-                return Response(url + " is not a valid youtube video", mimetype="text/plain",
-                                status=400)
-            else:
-                ip = request.remote_addr
-                time = datetime.datetime.utcnow()
+                if valid.status_code != 200:
+                    return Response(url + " is not a valid youtube video", mimetype="text/plain",
+                                    status=400)
+
                 decoded = valid.content.decode('utf-8')
-                m = Music(link=link,
-                          date_added=time,
-                          title_cache_time=time,
-                          added_by=request.values.get('name', ''),
-                          ip=ip,
-                          position=Music.query().count() + 1,  # not saved yet
-                          title=json.loads(decoded).get('title', ''))
+                title = json.loads(decoded).get('title', '')
+            else:
+                link = url
+                title = get_title(url)
 
-                data = {'id': Music.query().count(), 'url': url,
-                        'link': url_for('get', musicid=Music.query().count() + 1)}
-                m.put()
-                return jsonify(data)
+            ip = request.remote_addr
+            time = datetime.datetime.utcnow()
+
+            m = Music(link=link,
+                      date_added=time,
+                      title_cache_time=time,
+                      added_by=request.values.get('name', ''),
+                      ip=ip,
+                      position=Music.query().count() + 1,  # not saved yet
+                      title=title,
+                      type='youtube' if yt_match else 'bandcamp')
+
+            data = {'id': Music.query().count(), 'url': url,
+                    'link': url_for('get', musicid=Music.query().count() + 1),
+                    'type': m.type}
+            m.put()
+            return jsonify(data)
     else:
         return render_template('add.html')
 
@@ -111,7 +122,7 @@ def api(musicid):
         import time
         timestamp = int(time.mktime(entry.date_added.timetuple()) + entry.date_added.microsecond / 1000000.0)
         return jsonify({"id": entry.link, "name": entry.added_by, "time": timestamp,
-                        'num': musicid})
+                        'num': musicid, 'type': entry.type})
     return Response(json.dumps({}), mimetype="application/json", status=404)
 
 
@@ -151,3 +162,15 @@ def random():
     if request.args.get('shuffle', False):
         return redirect(url_for('get', musicid=random_music_num(), shuffle="true"))
     return redirect(url_for('get', musicid=random_music_num()))
+
+
+@app.route('/bandcamp/')
+def bandcamp():
+    link = request.args.get('link')
+    if not link:
+        return '', 400
+    raw_link = get_raw_link(link)
+    title = request.args.get('title') or get_title(link)  # get_title() makes a network call
+    if not raw_link:
+        return '', 400
+    return render_template('bandcamp_iframe.html', raw_link=raw_link, title=title, link=link)

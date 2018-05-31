@@ -1,0 +1,25 @@
+<div class="row">
+    <iframe id="player" width="640" height="200" src="{{ url_for('bandcamp', link=entry.link, title=entry.title) }}"
+            frameborder="0"></iframe>
+</div>
+
+<script>
+
+    function redirect() {
+        if (!document.getElementById("shuffle").checked) {
+            location = "{{ url_for('get', musicid=id + 1) }}";
+        } else {
+            location = "{{ url_for('random', shuffle=true) }}";
+        }
+    }
+
+    function handlePlayer() {
+        player = iframe.contentDocument.getElementById('player');
+        player.addEventListener('ended', redirect, false);
+    }
+
+    iframe = document.getElementById('player');
+    iframe.addEventListener('load', handlePlayer, false);
+
+
+</script>
