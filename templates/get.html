@@ -28,7 +28,9 @@
     </div>
     <br>
         {%  if entry.type == 'youtube' %}
-        {% include "youtube.html" %}
+            {% include 'youtube.html' %}
+        {% elif entry.type == 'bandcamp' %}
+            {% include 'bandcamp.html' %}
         {%  endif %}
     {% else %}
     <div class="row">
