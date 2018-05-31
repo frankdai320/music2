@@ -14,15 +14,12 @@
     }
 
     function handlePlayer() {
-        player = document.getElementById('player').contentDocument.getElementById('player');
-        if (player == null)
-            setTimeout(handlePlayer, 1000);
-        else
-            player.addEventListener('ended', redirect, false);
+        player = iframe.contentDocument.getElementById('player');
+        player.addEventListener('ended', redirect, false);
     }
 
-
-    handlePlayer();
+    iframe = document.getElementById('player');
+    iframe.addEventListener('load', handlePlayer, false);
 
 
 </script>
