@@ -94,7 +94,8 @@ def add():
                       type='youtube' if yt_match else 'bandcamp')
 
             data = {'id': Music.query().count(), 'url': url,
-                    'link': url_for('get', musicid=Music.query().count() + 1)}
+                    'link': url_for('get', musicid=Music.query().count() + 1),
+                    'type': m.type}
             m.put()
             return jsonify(data)
     else:
@@ -121,7 +122,7 @@ def api(musicid):
         import time
         timestamp = int(time.mktime(entry.date_added.timetuple()) + entry.date_added.microsecond / 1000000.0)
         return jsonify({"id": entry.link, "name": entry.added_by, "time": timestamp,
-                        'num': musicid})
+                        'num': musicid, 'type': entry.type})
     return Response(json.dumps({}), mimetype="application/json", status=404)
 
 
