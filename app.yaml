@@ -17,3 +17,5 @@ manual_scaling:
 handlers:
 - url: /.*
   script: main.app
+  secure: always
+
