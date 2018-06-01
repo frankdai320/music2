@@ -11,10 +11,11 @@ if sys.version_info[0] >= 3:  # major version
 else:
     from urlparse import urlparse
 
-PATTERN = re.compile(r'trackinfo:\s+(.+),')
+INFO_PATTERN = re.compile(r'trackinfo:\s+(.+),')
+ART_PATTERN = re.compile(r'<a class="popupImage" href="([\w./:]+)">')
 
 
-def _get_info(url):
+def get_info(url):
     if not from_host(url, 'bandcamp.com'):
         return {}
     try:
@@ -22,7 +23,7 @@ def _get_info(url):
     except Exception:
         return {}
 
-    search = PATTERN.search(page.content)
+    search = INFO_PATTERN.search(page.content)
     if not search:
         return {}
     try:
@@ -33,20 +34,23 @@ def _get_info(url):
     if len(info) == 0:
         return {}
 
-    return info[0]
+    info = info[0]
+
+    art = ART_PATTERN.search(page.content)
+    if art:
+        info['albumArt'] = art.group(1)
+
+    return info
 
 
-def get_raw_link(url):
-    file_info = _get_info(url).get('file')
+def find_raw_link(info):
+    """Get a raw audio link from the info returned by get_info()."""
+    file_info = info.get('file')
 
     if not file_info:
         return
 
     return file_info.get('mp3-128')
-
-
-def get_title(url):
-    return _get_info(url).get('title')
 
 
 def from_host(url, host):

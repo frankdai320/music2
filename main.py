@@ -3,7 +3,7 @@ import json
 import re
 import sys
 
-from bandcamp import get_raw_link, get_title
+from bandcamp import find_raw_link, get_info
 
 # magical nonsense to make python2 work
 reload(sys)
@@ -61,7 +61,7 @@ def add():
         yt_match = yt_regex.match(url)
         bc_match = None
         if not yt_match:
-            bc_match = get_raw_link(url)
+            bc_match = get_info(url)
 
         if not (yt_match or bc_match):
             return Response(url + " is not a valid url", mimetype='text/plain', status=400)
@@ -79,7 +79,7 @@ def add():
                 title = json.loads(decoded).get('title', '')
             else:
                 link = url
-                title = get_title(url)
+                title = bc_match.get('title', '')
 
             ip = request.remote_addr
             time = datetime.datetime.utcnow()
@@ -169,8 +169,10 @@ def bandcamp():
     link = request.args.get('link')
     if not link:
         return '', 400
-    raw_link = get_raw_link(link)
-    title = request.args.get('title') or get_title(link)  # get_title() makes a network call
+    info = get_info(link)
+    raw_link = find_raw_link(info)
+    title = info.get('title')
+    art = info.get('albumArt')
     if not raw_link:
         return '', 400
-    return render_template('bandcamp_iframe.html', raw_link=raw_link, title=title, link=link)
+    return render_template('bandcamp_iframe.html', raw_link=raw_link, title=title, link=link, art=art)

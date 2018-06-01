@@ -5,8 +5,15 @@
     <title>Bandcamp</title>
 </head>
 <body>
-<a href="{{ link }}" target="_top"><b>{{ title }}</b></a>
-<br><br>
-<audio id="player" style="width: 600px;" src="{{ raw_link }}" autoplay controls>No audio, RIP</audio>
+
+{% if art %}
+    <a href="{{ link }}" target="_top"><img src="{{ art }}" width=400px alt="{{ title }}" title="{{ title }}"/></a>
+{% else %}
+    <a href="{{ link }}" target="_top">{{ title }}</a>
+{% endif %}
+
+<br>
+<audio id="player" style="width: 400px;" src="{{ raw_link }}" autoplay controls>No audio, RIP</audio>
+
 </body>
 </html>

@@ -4,7 +4,7 @@ import json
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 
-from bandcamp import get_title
+from bandcamp import get_info
 
 
 class Music(ndb.Model):
@@ -33,7 +33,7 @@ class Music(ndb.Model):
                 'utf-7')
             self.title = json.loads(info).get('title', '')
         elif self.type == 'bandcamp':
-            self.title = get_title(self.link)
+            self.title = get_info(self.link).get('title', '')
 
     def update_title(self, force=False):
         if not self.title:
